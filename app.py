@@ -5,6 +5,7 @@ from tmdbv3api import Movie, TMDb
 movie = Movie()
 tmdb = TMDb()
 tmdb.api_key = 'your_api_key'
+tmdb.language = 'ko-KR' # 한국어 기준 데이터 불러오기
 
 def get_recommendations(title):
     idx = movies[movies['title'] == title].index[0]
@@ -20,7 +21,13 @@ def get_recommendations(title):
     for i in movie_indices:
         id = movies['id'].iloc[i]
         details = movie.details(id) # id 변수를 통해 TMDb로부터 영화 세부 정보(예산, 홈페이지, 언어 등)를 받아옵니다.
-        images.append('https://image.tmdb.org/t/p/w500' + details['poster_path'])
+        
+        image_path = details['poster_path']
+        if image_path:
+            image_path = 'https://image.tmdb.org/t/p/w500' + image_path
+        else:
+            image_path = 'no_image.jpg'
+        images.append(image_path)
         titles.append(details['title'])
     
     return images, titles
@@ -34,12 +41,13 @@ st.header('JKDb')
 movie_list = movies['title'].values
 title = st.selectbox('Choose a movie you like below!', movie_list)
 if st.button('Recommend'):
-    images, titles = get_recommendations(title)
-    
-    idx = 0
-    for i in range(0, 2):
-        cols = st.columns(5)
-        for col in cols:
-            col.image(images[idx])
-            col.write(titles[idx])
-            idx += 1
+    with st.spinner('Please wait until the process is done...'):
+        images, titles = get_recommendations(title)
+        
+        idx = 0
+        for i in range(0, 2):
+            cols = st.columns(5)
+            for col in cols:
+                col.image(images[idx])
+                col.write(titles[idx])
+                idx += 1
